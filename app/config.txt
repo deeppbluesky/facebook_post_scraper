@@ -1,0 +1,3 @@
+[credentials]
+email=lanzarodrigo4@gmail.com
+password=linux.com1
