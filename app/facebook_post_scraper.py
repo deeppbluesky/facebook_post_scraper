@@ -105,7 +105,7 @@ def scrap_post(credentials, url):
   end_string = ""
   i = 1
   while(i<=40):
-      print("Post: ", i)
+      print("---------------------------------------------------  Post: ", i)
       browser.execute_script(
           "window.scrollTo(0, document.body.scrollHeight);")
       element = get_by_xpath(
@@ -124,7 +124,6 @@ def scrap_post(credentials, url):
       except:
           message = None
       try:
-          # print("------------------------------------------------------", check_element(element, ".//span[@class='_3t54']/a[1]/span[@class='_3chu']"))
           like = element.find_element_by_xpath(
               ".//div[@class='_3t53 _4ar- _ipn']/span[@class='_3t54']/a[contains(@aria-label, 'Like') or contains(@aria-label, 'gusta')]").get_attribute("aria-label")
       except:
