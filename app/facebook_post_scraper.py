@@ -86,8 +86,7 @@ def scrap_post(credentials, id_group, limit):
   wd_options.add_argument("--disable-notifications")
   wd_options.add_argument("--disable-infobars")
   wd_options.add_argument("--start-maximized")
-  wd_options.add_argument("--mute-audio")
-  
+  wd_options.add_argument("--mute-audio")  
 
   email= credentials.get('credentials', 'email')
   password= credentials.get('credentials', 'password')
