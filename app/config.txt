@@ -1,3 +1,5 @@
 [credentials]
-email=
-password=
+email=foo@bar.com
+password=secret
+[group]
+id=675848676543890
