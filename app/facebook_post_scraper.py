@@ -4,17 +4,16 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
+from datetime import datetime
+import configparser
 import logging
+import getopt
+import time
 import sys
 import csv
-import time
-from datetime import datetime
-import getopt
-import configparser
 import json
 
 WAIT_TIMEOUT = 7
-
 
 def get_by_xpath(driver, xpath):
     """
@@ -198,9 +197,7 @@ def scrap_post(credentials, id_group, limit):
           'shares': shares,
             'views': views
           })
-      write_posts(posts, now)
-    
-    
+      write_posts(posts, now)    
 
       print("Titulo: ", title)
       print("Fecha: ", date)
