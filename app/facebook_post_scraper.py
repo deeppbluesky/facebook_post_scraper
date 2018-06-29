@@ -15,6 +15,20 @@ import json
 
 WAIT_TIMEOUT = 7
 
+# Configure logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.DEBUG)
+
+# Configure browser session
+wd_options = Options()
+wd_options.add_argument("--disable-notifications")
+wd_options.add_argument("--disable-infobars")
+wd_options.add_argument("--start-maximized")
+wd_options.add_argument("--mute-audio")
+
+browser = webdriver.Chrome(chrome_options=wd_options)
+
 def get_by_xpath(driver, xpath):
     """
     Get a web element through the xpath passed by performing a Wait on it.
@@ -40,7 +54,7 @@ def get_by_class_name(driver, class_name):
             (By.CLASS_NAME, class_name)
         ))
 
-
+# --------------- Get the date from current post ---------------
 def get_date(element):
     try:
         return get_by_xpath(element, ".//abbr").get_attribute("title")
@@ -61,56 +75,34 @@ def write_posts(posts, now):
 
     print("Successfully saved to %s" % csvOut)
 
-def check_element(browser, xpath):
-    try:
-        element= browser.find_element_by_xpath(xpath)
-        if(element.is_displayed()):
-            return True
-        else:
-            return False
-    except:
-        return None
+# Log in and navigate to group's page
+def fb_login(credentials, id_group):
+    email = credentials.get('credentials', 'email')
+    password = credentials.get('credentials', 'password')
+    browser.get('https://www.facebook.com')
 
-def get_me_gusta(element):
-    return element.find_element_by_xpath(".//a[@class='_3emk _401_']").get_attribute("ajaxify")
+    logger.info('Log in - Searching for the email input')
+    browser.find_element_by_id('email').send_keys(email)
 
+    logger.info('Log in - Searching for the password input')
+    browser.find_element_by_id('pass').send_keys(password)
+
+    logger.info('Log in - Searching for the submit button')
+    browser.find_element_by_id('loginbutton').click()
+
+    logger.info('Log in - get the user name')
+    user_name = browser.find_element_by_xpath(
+        "//div[@class='linkWrap noCount']").text
+
+    # browser.get('https://www.facebook.com/groups/142114343040195/')
+    browser.get('https://www.facebook.com/groups/%s/' % id_group)
+
+    logger.info('Log in - Searching the username, which is: %s' % user_name)
+
+# --------------- Scrap all posts ---------------
 def scrap_post(credentials, id_group, limit):
-  logging.basicConfig(level=logging.INFO)
-  logger= logging.getLogger(__name__)
-  logger.setLevel(level=logging.DEBUG)
-
   now = datetime.now()
-
-  # Configure browser session
-  wd_options= Options()
-  wd_options.add_argument("--disable-notifications")
-  wd_options.add_argument("--disable-infobars")
-  wd_options.add_argument("--start-maximized")
-  wd_options.add_argument("--mute-audio")  
-
-  email= credentials.get('credentials', 'email')
-  password= credentials.get('credentials', 'password')
-
-  browser= webdriver.Chrome(chrome_options=wd_options)
-  browser.get('https://www.facebook.com')
-
-  logger.info('Log in - Searching for the email input')
-  browser.find_element_by_id('email').send_keys(email)
-
-  logger.info('Log in - Searching for the password input')
-  browser.find_element_by_id('pass').send_keys(password)
-
-  logger.info('Log in - Searching for the submit button')
-  browser.find_element_by_id('loginbutton').click()
-
-  logger.info('Log in - get the user name')
-  user_name= browser.find_element_by_xpath(
-      "//div[@class='linkWrap noCount']").text  # It works with _2s25 too
-
-  # browser.get('https://www.facebook.com/groups/142114343040195/')
-  browser.get('https://www.facebook.com/groups/%s/' %id_group)
-
-  logger.info('Log in - Saving the username, which is: %s' % user_name)
+  fb_login(credentials, id_group)
 
   # Get text from all elements
   posts = []
@@ -121,13 +113,22 @@ def scrap_post(credentials, id_group, limit):
           if(i > int(limit)):
                 break
       print("---------------------------------------------------  Post: ", i)
+
+      # Scroll to bottom
       browser.execute_script(
           "window.scrollTo(0, document.body.scrollHeight);")
-      element = get_by_xpath(
-          browser, "//div[@class='_4-u2 mbm _4mrt _5jmm _5pat _5v3q _4-u8' or @class='_5pbx userContent _3576'][%i]" % i)      
-      # res.append(element)
+
+      # Trying to get the post
+      try:
+          element = get_by_xpath( 
+              browser, "//div[@class='_4-u2 mbm _4mrt _5jmm _5pat _5v3q _4-u8' or @class='_5pbx userContent _3576'][%i]" % i)      
+      except:
+          continue
+      
+      # Get the date from current post
       date = get_date(element)
-      # me_gusta = get_me_gusta(element)
+
+      # trying to get the reactions for current post
       try:
           title = element.find_element_by_xpath(
               ".//h5[@class='_14f3 _14f5 _5pbw _5vra']").text
@@ -168,6 +169,8 @@ def scrap_post(credentials, id_group, limit):
               ".//div[@class='_3t53 _4ar- _ipn']/span[@class='_3t54']/a[contains(@aria-label, 'Angry') or contains(@aria-label, 'enoja')]").get_attribute("aria-label")
       except:
           angry = 'None'
+
+      # Trying to get the number of comments, shares and views for current post
       try:
           comments = element.find_element_by_xpath(
               ".//div[@class='_ipo']//a[contains(text(), 'comentario') or contains(text(), 'comments')]").text
@@ -184,6 +187,7 @@ def scrap_post(credentials, id_group, limit):
       except:
           views = 'None'
 
+      # Saving the current post into list of posts
       posts.append({
           'date': date,
           'title': title.encode('utf-8', 'ignore'), #to prevent CSV writing issues
@@ -200,11 +204,12 @@ def scrap_post(credentials, id_group, limit):
           })
       write_posts(posts, now)    
 
+      # Showing data from current post
       print("Titulo: ", title)
       print("Fecha: ", date)
       print("Mensaje: ", message)
       print("Me gusta: ", like)
-      print("Me entristece: ", love)
+      print("Me encanta: ", love)
       print("Me divierte: ", haha)
       print("Me asombra: ", wow)
       print("Me entristece: ", sad)
@@ -214,6 +219,7 @@ def scrap_post(credentials, id_group, limit):
       print("Vistas: ", views)
       i = i+1     
 
+      # Trying if is the end
       try:
           end_string = browser.find_element_by_xpath(
               "//span[@class='fcg' and contains(text(), 'creó el grupo')] | //span[@class='fcg' and contains(text(), 'created the group')]").text
@@ -239,13 +245,11 @@ def main(argv):
         email = configObj.get('credentials', 'email')
         password = configObj.get('credentials', 'password')
         id_group = configObj.get('group', 'id')
-        # limit = configObj.get('limit', 'limit')
-        # posts = scrap_post(credentials, url)
+        
         scrap_post(configObj, id_group, limit)
-        # print((json.dumps(posts)))
     else:
         print('USAGE: ')
-        print('facebook_post_scraper.py -c config.txt -l 40')
+        print('python facebook_post_scraper.py -c config.txt')
 
 if __name__ == '__main__':
     main(sys.argv[1:])
