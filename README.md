@@ -22,7 +22,7 @@ id=675848676543890
 ### Run the script
 1. `cd app`
 2. Run ```python facebook_post_scraper.py -c config.txt```
-3. Optionally you can pass the second parameter that limits the number of posts <br />
+3. Optionally you can pass the second parameter which limits the number of posts: <br />
    `python facebook_post_scraper.py -c config.txt -l 40`
 4. It will open a browser window and will fill your username & password automatically.
 5. You should see your Facebook's group page scroll to the bottom.
