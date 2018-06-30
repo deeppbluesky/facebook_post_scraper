@@ -7,7 +7,7 @@ You'll need to have python, pip, and [Google Chrome](https://www.google.com/chro
 
 1. Clone this repository
 2. `cd` into the cloned folder 
-3. `pip install -r requerments.txt`
+3. `pip install -r requeriments.txt`
 
 ## Set up its config.txt file
 Fill your email, password of Facebook's profile and Facebook's group ID.
